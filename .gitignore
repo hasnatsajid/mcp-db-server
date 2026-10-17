@@ -1,0 +1,23 @@
+# Build output
+/bin/
+*.exe
+*.test
+*.out
+coverage.*
+
+# Local config and secrets (only .env.example is committed)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Editors / OS
+.idea/
+.vscode/
+.DS_Store
+
+# Local data
+/tmp/
+/data/
+audit.jsonl
