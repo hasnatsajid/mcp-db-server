@@ -1,8 +1,5 @@
 # Connecting to Claude Desktop
 
-> Applies once the MCP protocol is implemented (see roadmap). The binary
-> already starts in stdio mode.
-
 1. Build the binary:
 
    ```sh
@@ -17,7 +14,12 @@
    GRANT USAGE ON SCHEMA public TO mcp_readonly;
    GRANT SELECT ON ALL TABLES IN SCHEMA public TO mcp_readonly;
    ALTER ROLE mcp_readonly SET default_transaction_read_only = on;
+   -- Revoke anything clients must never see, even if the policy is misconfigured:
+   REVOKE SELECT ON public.users FROM mcp_readonly;
    ```
+
+   With `make up`, the sample database already has this role
+   (password from `MCP_READONLY_PASSWORD`).
 
 3. Open Claude Desktop → Settings → Developer → Edit Config, and add the
    server to `claude_desktop_config.json`:
@@ -44,6 +46,7 @@
    This file holds a credential: keep it private and don't commit or share it.
 
 4. Restart Claude Desktop. The tools appear under the tools (hammer) menu.
+   Try: *"What tables are in the database? Which customers spent the most?"*
 
 **Troubleshooting:** logs go to stderr, which Claude Desktop captures in its MCP
 log files. Nothing but protocol messages may be written to stdout.

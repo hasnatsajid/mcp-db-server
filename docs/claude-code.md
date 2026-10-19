@@ -1,7 +1,5 @@
 # Connecting to Claude Code
 
-> Applies once the MCP protocol is implemented (see roadmap).
-
 ## stdio (local)
 
 ```sh
@@ -30,11 +28,15 @@ Inside a session, run `/mcp` to see the server's status and tools.
 
 ## HTTP (shared server)
 
-Run the server with `MCP_TRANSPORT=http`, then:
+Run the server with `MCP_TRANSPORT=http` and an `HTTP_AUTH_TOKEN` (at least
+32 characters, e.g. `openssl rand -hex 32`), then:
 
 ```sh
-claude mcp add --transport http postgres-readonly https://<your-host>/mcp
+claude mcp add --transport http postgres-readonly https://<your-host>/mcp \
+  --header "Authorization: Bearer ${MCP_DB_TOKEN}"
 ```
 
-Put the HTTP transport behind TLS and authentication before exposing it
-beyond localhost.
+Keep the token in an environment variable (`MCP_DB_TOKEN` here) rather than
+typing it into shell history. The server only checks the bearer token; put it
+behind TLS (a reverse proxy) before exposing it beyond localhost.
+`GET /healthz` is unauthenticated for load balancer checks.

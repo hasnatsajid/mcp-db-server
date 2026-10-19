@@ -21,9 +21,39 @@ jobs:
       - name: Build
         run: go build ./...
       - name: Vet
-        run: go vet ./...
+        run: go vet ./... && go vet -tags integration ./...
       - name: Test
         run: go test -race -count=1 ./...
+      - name: Fuzz SQL validator
+        run: go test -run='^$' -fuzz=FuzzValidateSelect -fuzztime=30s ./internal/guard
+
+  integration:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        # Disposable CI database with no exposed credentials: trust auth on
+        # the job's private network only.
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      MCP_TEST_DATABASE_URL: postgres://postgres@localhost:5432/postgres?sslmode=disable
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: Integration tests
+        run: go test -race -count=1 -tags integration ./...
+      - name: Sample schema loads
+        run: psql "$MCP_TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -q -f migrations/0001_sample.sql
 
   lint:
     runs-on: ubuntu-latest
@@ -35,3 +65,4 @@ jobs:
       - uses: golangci/golangci-lint-action@v8
         with:
           version: latest
+          args: --build-tags integration
